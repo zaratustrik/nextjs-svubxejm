@@ -3,194 +3,144 @@
 import React, { useState, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { useAccount, useSignMessage } from 'wagmi';
-import { jsPDF } from 'jspdf'; // Библиотека для генерации PDF
+import { SHA256 } from 'crypto-js';
+import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
+// Импортируем наш переводчик
+import { useLanguage } from '../context/LanguageContext';
 
-const FileHasher = () => {
+export const FileHasher = () => {
   const [fileHash, setFileHash] = useState<string | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);
-  const [signature, setSignature] = useState<string | null>(null);
-  const [isSigning, setIsSigning] = useState(false);
-
-  const { address, isConnected } = useAccount();
+  const [status, setStatus] = useState<string>('');
+  
+  // Подключаем словарь
+  const { t } = useLanguage(); 
+  
+  const { address } = useAccount();
   const { signMessageAsync } = useSignMessage();
 
-  // 1. Хэширование
   const onDrop = useCallback((acceptedFiles: File[]) => {
     const file = acceptedFiles[0];
+    if (!file) return;
+
     setFileName(file.name);
-    setSignature(null);
+    setStatus('Computing SHA-256...'); // Технические статусы можно оставить на EN или тоже перевести
 
     const reader = new FileReader();
-    reader.onload = async (e) => {
-      const buffer = e.target?.result;
-      if (buffer instanceof ArrayBuffer) {
-        const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
-        const hashArray = Array.from(new Uint8Array(hashBuffer));
-        const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-        setFileHash(`0x${hashHex}`);
+    reader.onload = (event) => {
+      const binary = event.target?.result;
+      if (binary) {
+        // @ts-ignore
+        const wordArray = API_SHA256_HELPER(binary);
+        const hash = SHA256(wordArray).toString();
+        setFileHash(hash);
+        setStatus('Ready to sign');
       }
     };
     reader.readAsArrayBuffer(file);
   }, []);
 
+  // Вспомогательная функция для крипто (оставляем как есть)
+  const API_SHA256_HELPER = (buffer: any) => {
+    const words = [];
+    const u8 = new Uint8Array(buffer);
+    for (let i = 0; i < u8.length; i += 4) {
+      words.push(
+        (u8[i] << 24) | (u8[i + 1] << 16) | (u8[i + 2] << 8) | u8[i + 3]
+      );
+    }
+    return { sigBytes: u8.length, words: words };
+  };
+
+  const handleSignAndDownload = async () => {
+    if (!fileHash || !address) return;
+    try {
+      setStatus('Please sign in your wallet...');
+      const signature = await signMessageAsync({
+        message: `I certify that I possess the file "${fileName}" with SHA-256 hash: ${fileHash}`,
+      });
+
+      setStatus('Generating PDF...');
+      await generatePDF(fileHash, signature, address);
+      setStatus('Done! Certificate downloaded.');
+    } catch (error) {
+      console.error(error);
+      setStatus('Error signing or generating PDF');
+    }
+  };
+
+  const generatePDF = async (hash: string, sig: string, wallet: string) => {
+    const pdfDoc = await PDFDocument.create();
+    const page = pdfDoc.addPage([600, 400]);
+    const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+
+    page.drawText('CryptoNotary Certificate', { x: 50, y: 350, size: 24, font });
+    page.drawText(`File: ${fileName}`, { x: 50, y: 300, size: 12, font });
+    page.drawText(`SHA-256: ${hash}`, { x: 50, y: 280, size: 10, font });
+    page.drawText(`Wallet Owner: ${wallet}`, { x: 50, y: 240, size: 10, font });
+    page.drawText(`Digital Signature:`, { x: 50, y: 200, size: 10, font });
+    page.drawText(`${sig.slice(0, 64)}...`, { x: 50, y: 185, size: 8, font });
+    
+    page.drawText(`Date: ${new Date().toLocaleString()}`, { x: 50, y: 50, size: 10, font });
+
+    const pdfBytes = await pdfDoc.save();
+    const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'Certificate_Proof.pdf';
+    link.click();
+  };
+
   const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop });
 
-  // 2. Подпись
-  const handleSign = async () => {
-    if (!fileHash) return;
-    setIsSigning(true);
-    try {
-      const message = `Я подтверждаю авторство файла:\nИмя: ${fileName}\nХэш: ${fileHash}\nДата: ${new Date().toISOString()}`;
-      const sig = await signMessageAsync({ message });
-      setSignature(sig);
-    } catch (error) {
-      console.error('Ошибка подписи:', error);
-    }
-    setIsSigning(false);
-  };
-
-  // 3. Генерация PDF
-  const downloadCertificate = () => {
-    if (!fileHash || !signature || !address) return;
-
-    const doc = new jsPDF();
-    const date = new Date().toLocaleString();
-
-    // Дизайн сертификата
-    doc.setLineWidth(1);
-    doc.rect(10, 10, 190, 277); // Рамка
-    
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(26);
-    doc.text("Certificate of Ownership", 105, 40, { align: "center" });
-
-    doc.setFontSize(12);
-    doc.setFont("helvetica", "normal");
-    doc.text("Blockchain Timestamp Service", 105, 50, { align: "center" });
-
-    doc.line(40, 60, 170, 60); // Линия разделителя
-
-    // Основной текст
-    doc.setFontSize(14);
-    doc.text("This certifies that the file described below", 105, 80, { align: "center" });
-    doc.text("was cryptographically signed by the owner.", 105, 88, { align: "center" });
-
-    // Блок данных
-    let y = 110;
-    const lineHeight = 12;
-
-    doc.setFont("courier", "bold");
-    doc.text(`File Name:`, 20, y);
-    doc.setFont("courier", "normal");
-    doc.text(`${fileName}`, 60, y);
-    
-    y += lineHeight;
-    doc.setFont("courier", "bold");
-    doc.text(`Date:`, 20, y);
-    doc.setFont("courier", "normal");
-    doc.text(`${date}`, 60, y);
-
-    y += lineHeight;
-    doc.setFont("courier", "bold");
-    doc.text(`Owner:`, 20, y);
-    doc.setFont("courier", "normal");
-    doc.setFontSize(10);
-    doc.text(`${address}`, 60, y);
-
-    y += lineHeight * 2;
-    doc.setFontSize(14);
-    doc.setFont("courier", "bold");
-    doc.text(`SHA-256 Hash:`, 20, y);
-    y += 8;
-    doc.setFont("courier", "normal");
-    doc.setFontSize(10);
-    doc.text(`${fileHash}`, 20, y);
-
-    y += lineHeight * 2;
-    doc.setFontSize(14);
-    doc.setFont("courier", "bold");
-    doc.text(`Digital Signature:`, 20, y);
-    y += 8;
-    doc.setFont("courier", "normal");
-    doc.setFontSize(8);
-    
-    // Разбиваем длинную строку подписи, чтобы не вылезала за край
-    const splitSig = doc.splitTextToSize(signature, 170);
-    doc.text(splitSig, 20, y);
-
-    // Подвал
-    doc.setFont("helvetica", "italic");
-    doc.setFontSize(10);
-    doc.text("Generated by CryptoNotary", 105, 280, { align: "center" });
-
-    doc.save("Certificate.pdf");
-  };
-
   return (
-    <div className="space-y-6">
-      {/* Дропзона */}
+    <div className="w-full max-w-2xl mx-auto bg-white rounded-3xl shadow-xl p-8 border border-gray-100">
+      
       {!fileHash ? (
         <div 
           {...getRootProps()} 
-          className={`border-2 border-dashed rounded-2xl p-12 text-center transition cursor-pointer
-            ${isDragActive ? 'border-blue-500 bg-blue-50' : 'border-gray-300 hover:border-blue-400 hover:bg-gray-50'}
-          `}
+          className={`border-2 border-dashed rounded-2xl h-64 flex flex-col items-center justify-center cursor-pointer transition-colors
+            ${isDragActive ? 'border-blue-500 bg-blue-50' : 'border-gray-300 hover:border-blue-400 hover:bg-gray-50'}`}
         >
           <input {...getInputProps()} />
-          <p className="text-gray-500 font-medium">Перетащи файл сюда или кликни</p>
+          
+          {/* ВОТ ТУТ МЫ ЗАМЕНИЛИ ТЕКСТ НА ПЕРЕМЕННУЮ */}
+          <p className="text-gray-500 font-medium text-lg text-center px-4">
+            {isDragActive ? 'Drop it here!' : t('dragDrop')}
+          </p>
+          
         </div>
       ) : (
-        <div className="p-6 bg-gray-50 rounded-2xl border border-gray-200 shadow-sm">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="font-bold text-gray-700 truncate max-w-[200px]">{fileName}</h3>
-            <button 
-              onClick={() => { setFileHash(null); setSignature(null); }}
-              className="text-xs text-red-500 hover:underline"
-            >
-              Сбросить
-            </button>
+        <div className="text-center space-y-6">
+          <div className="p-4 bg-green-50 rounded-xl border border-green-100">
+            <p className="text-sm text-gray-500 mb-1">File Hash (SHA-256):</p>
+            <p className="font-mono text-xs break-all text-green-800">{fileHash}</p>
           </div>
-          <div className="text-xs text-gray-500 break-all font-mono bg-white p-3 rounded border">
-            {fileHash}
-          </div>
-        </div>
-      )}
+          
+          <p className="text-gray-600">{status}</p>
 
-      {/* Кнопка подписи */}
-      {fileHash && !signature && (
-        <button
-          onClick={handleSign}
-          disabled={!isConnected || isSigning}
-          className={`w-full py-3 rounded-xl font-bold text-white transition shadow-lg shadow-blue-500/30
-            ${isConnected 
-              ? 'bg-blue-600 hover:bg-blue-700 transform hover:scale-[1.02]' 
-              : 'bg-gray-400 cursor-not-allowed'}
-          `}
-        >
-          {isSigning ? 'Подписываем...' : isConnected ? 'Подписать кошельком' : 'Подключи кошелек'}
-        </button>
-      )}
-
-      {/* Успех + Скачать PDF */}
-      {signature && (
-        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-          <div className="bg-green-50 border border-green-200 rounded-2xl p-6 text-center space-y-4 shadow-sm">
-            <div className="w-12 h-12 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto text-2xl">
-              ✓
-            </div>
-            <h3 className="text-green-800 font-bold text-lg">Авторство подтверждено!</h3>
-            
+          {!address ? (
+            <p className="text-red-500 text-sm font-bold">
+              {/* Тут можно тоже добавить перевод, например t('connectWalletWarning') */}
+              Please connect wallet first
+            </p>
+          ) : (
             <button
-              onClick={downloadCertificate}
-              className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-xl transition flex items-center justify-center gap-2 shadow-lg shadow-green-500/20 transform hover:scale-[1.02]"
+              onClick={handleSignAndDownload}
+              className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-xl shadow-lg shadow-blue-500/30 transition-all transform hover:-translate-y-0.5 active:translate-y-0"
             >
-              <span>📄</span> Скачать Сертификат
+              Sign & Download Certificate
             </button>
-          </div>
+          )}
+
+          <button 
+            onClick={() => { setFileHash(null); setStatus(''); }}
+            className="text-gray-400 text-sm hover:text-gray-600 underline"
+          >
+            Reset
+          </button>
         </div>
       )}
     </div>
   );
 };
-
-export default FileHasher;
