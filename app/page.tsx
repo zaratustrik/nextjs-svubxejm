@@ -26,7 +26,11 @@ export default function Home() {
         <FileHasher />
       </div>
 
-      <div className="max-w-6xl mx-auto w-full grid grid-cols-1 md:grid-cols-3 gap-8 px-4 mb-24">
+      {/* ДОБАВЛЯЕМ id="features" и scroll-mt-32 */}
+<div 
+  id="features" 
+  className="scroll-mt-32 max-w-6xl mx-auto w-full grid grid-cols-1 md:grid-cols-3 gap-8 px-4 mb-24"
+>
         
         <div className="bg-white/60 hover:bg-white/80 transition p-8 rounded-3xl border border-white/50 shadow-lg shadow-gray-200/50 group">
           <div className="w-12 h-12 bg-pink-100 text-pink-600 rounded-2xl flex items-center justify-center text-2xl mb-6 group-hover:scale-110 transition-transform">
