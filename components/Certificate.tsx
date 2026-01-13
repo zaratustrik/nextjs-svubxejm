@@ -20,19 +20,16 @@ export const Certificate: React.FC<CertificateProps> = ({
 }) => {
   const certificateRef = useRef<HTMLDivElement>(null);
 
-  // Функция для скачивания именно ЭТОГО красивого вида в PDF
   const downloadPdf = async () => {
     if (!certificateRef.current) return;
 
     try {
-      // 1. Делаем "скриншот" сертификата в высоком качестве
       const canvas = await html2canvas(certificateRef.current, {
-        scale: 2, // Улучшает четкость текста
-        backgroundColor: '#FFFCF5', // Цвет фона бумаги
+        scale: 2,
+        backgroundColor: '#FFFCF5',
         logging: false,
       });
 
-      // 2. Создаем PDF
       const imgData = canvas.toDataURL('image/png');
       const pdf = new jsPDF({
         orientation: 'landscape',
@@ -40,12 +37,10 @@ export const Certificate: React.FC<CertificateProps> = ({
         format: 'a4',
       });
 
-      // 3. Растягиваем изображение на весь А4
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = pdf.internal.pageSize.getHeight();
       pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
 
-      // 4. Скачиваем
       pdf.save(`Certificate_${fileName}.pdf`);
     } catch (error) {
       console.error('Ошибка генерации PDF:', error);
@@ -56,23 +51,18 @@ export const Certificate: React.FC<CertificateProps> = ({
     <div className="flex flex-col items-center gap-6 mt-8">
       
       {/* === ВИЗУАЛЬНАЯ ЧАСТЬ СЕРТИФИКАТА === */}
-      {/* Этот блок будет сохранен в PDF */}
       <div 
         ref={certificateRef}
         className="w-[800px] h-[600px] bg-[#FFFCF5] text-slate-900 relative p-12 shadow-2xl overflow-hidden border border-slate-300"
-        style={{ fontFamily: 'Times New Roman, serif' }} // Принудительно ставим шрифт с засечками
+        style={{ fontFamily: 'Times New Roman, serif' }}
       >
         
-        {/* Декоративная рамка (Двойная) */}
+        {/* Декоративные рамки и фон */}
         <div className="absolute inset-4 border-[3px] border-slate-800 pointer-events-none z-10"></div>
         <div className="absolute inset-6 border border-slate-600 pointer-events-none z-10"></div>
-
-        {/* Водяной знак на фоне */}
         <div className="absolute inset-0 flex items-center justify-center opacity-[0.03] pointer-events-none">
           <ShieldCheck size={400} />
         </div>
-
-        {/* Угловые узоры (CSS треугольники) */}
         <div className="absolute top-4 left-4 w-16 h-16 border-t-[3px] border-l-[3px] border-slate-800"></div>
         <div className="absolute top-4 right-4 w-16 h-16 border-t-[3px] border-r-[3px] border-slate-800"></div>
         <div className="absolute bottom-4 left-4 w-16 h-16 border-b-[3px] border-l-[3px] border-slate-800"></div>
@@ -116,7 +106,7 @@ export const Certificate: React.FC<CertificateProps> = ({
               </p>
             </div>
 
-            {/* Хеш и подпись (Технические данные) */}
+            {/* Хеш и подпись */}
             <div className="grid grid-cols-2 gap-4 text-left bg-white/50 border border-slate-200 p-4 rounded-lg">
                <div>
                   <div className="flex items-center gap-1 text-[10px] uppercase font-bold text-slate-500 mb-1">
@@ -138,30 +128,35 @@ export const Certificate: React.FC<CertificateProps> = ({
 
           </div>
 
-          {/* Подвал с печатью и датой */}
-          <div className="w-full flex justify-between items-end px-12 mt-4">
+          {/* === ИСПРАВЛЕННЫЙ ПОДВАЛ === */}
+          {/* Используем Grid для четкого разделения на 3 колонки */}
+          <div className="w-full grid grid-cols-3 items-end px-8 mt-4">
             
+            {/* Левая колонка: Дата */}
             <div className="text-left">
               <div className="flex items-center gap-2 text-slate-600 mb-1">
                 <Calendar size={16} />
                 <span className="font-bold text-sm">Date Issued:</span>
               </div>
-              <p className="text-lg border-b border-slate-400 pb-1 pr-8 inline-block font-mono">
+              {/* Убрал pr-8, чтобы линия была ровно под текстом */}
+              <p className="text-lg border-b border-slate-400 pb-1 inline-block font-mono">
                 {timestamp}
               </p>
             </div>
 
-            {/* Золотая Печать */}
-            <div className="relative">
+            {/* Центральная колонка: Золотая Печать */}
+            {/* Убрал absolute, теперь она просто в центре своей колонки */}
+            <div className="flex flex-col items-center pb-2">
               <div className="w-24 h-24 rounded-full bg-gradient-to-br from-yellow-200 via-yellow-400 to-yellow-600 shadow-xl border-4 border-yellow-100 flex items-center justify-center">
                 <ShieldCheck className="text-yellow-900 opacity-70" size={40} />
               </div>
-              <div className="absolute -bottom-8 w-full text-center">
+              <div className="mt-2 text-center">
                  <p className="text-[10px] uppercase tracking-widest font-bold text-slate-400">Verified</p>
               </div>
             </div>
 
-            <div className="text-right">
+            {/* Правая колонка: Service Provider */}
+            <div className="text-right pb-2">
                <p className="text-[10px] uppercase tracking-widest text-slate-400 mb-2">Service Provider</p>
                <div className="flex items-center gap-2 justify-end">
                  <div className="bg-blue-600 text-white text-xs font-bold p-1 rounded">CN</div>
@@ -174,7 +169,6 @@ export const Certificate: React.FC<CertificateProps> = ({
         </div>
       </div>
 
-      {/* Кнопка скачивания */}
       <button 
         onClick={downloadPdf}
         className="bg-slate-900 hover:bg-slate-800 text-white px-8 py-3 rounded-xl font-bold transition shadow-lg shadow-slate-900/20 flex items-center gap-2 animate-bounce"
