@@ -4,13 +4,19 @@ import React, { useState, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { useAccount, useSignMessage } from 'wagmi';
 import { SHA256 } from 'crypto-js';
-import { PDFDocument, StandardFonts } from 'pdf-lib';
 import { useLanguage } from '../context/LanguageContext';
+// Импортируем наш новый красивый сертификат
+import { Certificate } from './Certificate';
+import { Upload, FileCheck, RefreshCw } from 'lucide-react';
 
 export const FileHasher = () => {
   const [fileHash, setFileHash] = useState<string | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);
   const [status, setStatus] = useState<string>('');
+  
+  // Состояния для сертификата
+  const [signature, setSignature] = useState<string | null>(null);
+  const [timestamp, setTimestamp] = useState<string | null>(null);
   
   const { t } = useLanguage(); 
   const { address } = useAccount();
@@ -29,45 +35,25 @@ export const FileHasher = () => {
     return { sigBytes: u8.length, words: words };
   };
 
-  const generatePDF = async (hash: string, sig: string, wallet: string, fName: string) => {
-    const pdfDoc = await PDFDocument.create();
-    const page = pdfDoc.addPage([600, 400]);
-    const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
-
-    page.drawText('CryptoNotary Certificate', { x: 50, y: 350, size: 24, font });
-    page.drawText(`File: ${fName}`, { x: 50, y: 300, size: 12, font });
-    page.drawText(`SHA-256: ${hash}`, { x: 50, y: 280, size: 10, font });
-    page.drawText(`Wallet Owner: ${wallet}`, { x: 50, y: 240, size: 10, font });
-    page.drawText(`Digital Signature:`, { x: 50, y: 200, size: 10, font });
-    page.drawText(`${sig.slice(0, 64)}...`, { x: 50, y: 185, size: 8, font });
-    
-    page.drawText(`Date: ${new Date().toLocaleString()}`, { x: 50, y: 50, size: 10, font });
-
-    const pdfBytes = await pdfDoc.save();
-    // ИСПРАВЛЕНИЕ 1: Добавили "as any", чтобы успокоить TypeScript
-    const blob = new Blob([pdfBytes as any], { type: 'application/pdf' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = 'Certificate_Proof.pdf';
-    link.click();
-  };
-
   // --- 2. ОСНОВНЫЕ ФУНКЦИИ ---
 
-  const handleSignAndDownload = async () => {
+  const handleSign = async () => {
     if (!fileHash || !address) return;
     try {
       setStatus('Please sign in your wallet...');
-      const signature = await signMessageAsync({
+      
+      const sig = await signMessageAsync({
         message: `I certify that I possess the file "${fileName}" with SHA-256 hash: ${fileHash}`,
       });
 
-      setStatus('Generating PDF...');
-      await generatePDF(fileHash, signature, address, fileName || 'Unknown File');
-      setStatus('Done! Certificate downloaded.');
+      // Если подпись успешна, сохраняем данные и показываем сертификат
+      setSignature(sig);
+      setTimestamp(new Date().toLocaleString());
+      setStatus('Certificate generated successfully!');
+      
     } catch (error) {
       console.error(error);
-      setStatus('Error signing or generating PDF');
+      setStatus('Error signing message');
     }
   };
 
@@ -75,6 +61,10 @@ export const FileHasher = () => {
     const file = acceptedFiles[0];
     if (!file) return;
 
+    // Сбрасываем старые данные при загрузке нового файла
+    setSignature(null);
+    setTimestamp(null);
+    
     setFileName(file.name);
     setStatus('Computing SHA-256...');
 
@@ -83,7 +73,7 @@ export const FileHasher = () => {
       const binary = event.target?.result;
       if (binary) {
         const wordArray = API_SHA256_HELPER(binary);
-        // ИСПРАВЛЕНИЕ 2: Добавили "as any", чтобы TypeScript принял наш самодельный wordArray
+        // "as any" для crypto-js типов
         const hash = SHA256(wordArray as any).toString();
         setFileHash(hash);
         setStatus('Ready to sign');
@@ -94,48 +84,102 @@ export const FileHasher = () => {
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop });
 
+  const handleReset = () => {
+    setFileHash(null);
+    setFileName(null);
+    setSignature(null);
+    setStatus('');
+  };
+
   // --- 3. ИНТЕРФЕЙС ---
+  
+  // Если сертификат уже создан (есть подпись), показываем ТОЛЬКО его
+  if (signature && fileHash && fileName && address && timestamp) {
+    return (
+      <div className="w-full flex flex-col items-center animate-fade-in">
+        <div className="bg-green-100 text-green-800 px-6 py-2 rounded-full font-medium mb-8 flex items-center gap-2">
+            <FileCheck size={18} />
+            Proof Generated Successfully
+        </div>
+
+        {/* Наш красивый компонент */}
+        <Certificate 
+          fileName={fileName}
+          fileHash={fileHash}
+          walletAddress={address}
+          signature={signature}
+          timestamp={timestamp}
+        />
+
+        <button 
+            onClick={handleReset}
+            className="mt-12 text-slate-400 hover:text-slate-600 flex items-center gap-2 transition"
+        >
+            <RefreshCw size={14} /> Process another file
+        </button>
+      </div>
+    );
+  }
+
+  // Иначе показываем форму загрузки
   return (
-    <div className="w-full max-w-2xl mx-auto bg-white rounded-3xl shadow-xl p-8 border border-gray-100">
+    <div className="w-full bg-white/80 backdrop-blur-md rounded-[2rem] shadow-2xl shadow-blue-900/5 p-8 md:p-12 border border-white">
       
       {!fileHash ? (
+        // Состояние: Загрузка файла
         <div 
           {...getRootProps()} 
-          className={`border-2 border-dashed rounded-2xl h-64 flex flex-col items-center justify-center cursor-pointer transition-colors
-            ${isDragActive ? 'border-blue-500 bg-blue-50' : 'border-gray-300 hover:border-blue-400 hover:bg-gray-50'}`}
+          className={`
+            border-2 border-dashed rounded-2xl h-80 flex flex-col items-center justify-center cursor-pointer transition-all duration-300 group
+            ${isDragActive 
+              ? 'border-blue-500 bg-blue-50 scale-[1.02]' 
+              : 'border-slate-200 hover:border-blue-400 hover:bg-slate-50 bg-slate-50/50'}
+          `}
         >
           <input {...getInputProps()} />
-          <p className="text-gray-500 font-medium text-lg text-center px-4">
-            {isDragActive ? 'Drop it here!' : t('dragDrop')}
+          <div className="bg-white p-5 rounded-full mb-6 shadow-sm group-hover:scale-110 transition duration-300">
+            <Upload className="text-blue-600" size={32} />
+          </div>
+          <p className="text-slate-600 font-semibold text-xl text-center px-4 mb-2">
+            {isDragActive ? 'Drop it like it\'s hot!' : t('dragDrop')}
           </p>
+          <p className="text-slate-400 text-sm">Supports any file type</p>
         </div>
       ) : (
-        <div className="text-center space-y-6">
-          <div className="p-4 bg-green-50 rounded-xl border border-green-100">
-            <p className="text-sm text-gray-500 mb-1">File Hash (SHA-256):</p>
-            <p className="font-mono text-xs break-all text-green-800">{fileHash}</p>
+        // Состояние: Файл загружен, ждем подписи
+        <div className="text-center space-y-8 animate-fade-in-up">
+          
+          <div>
+            <h3 className="text-xl font-bold text-slate-800 mb-2">File Processed</h3>
+            <p className="text-slate-500">{fileName}</p>
+          </div>
+
+          <div className="p-5 bg-slate-50 rounded-2xl border border-slate-100 text-left">
+            <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">SHA-256 Fingerprint</p>
+            <p className="font-mono text-xs break-all text-slate-600 leading-relaxed">{fileHash}</p>
           </div>
           
-          <p className="text-gray-600">{status}</p>
+          <div className="h-px w-full bg-slate-100"></div>
 
           {!address ? (
-            <p className="text-red-500 text-sm font-bold">
-              Please connect wallet first
-            </p>
+            <div className="p-4 bg-orange-50 text-orange-600 rounded-xl text-sm font-medium">
+              Please connect your wallet in the top right corner to continue.
+            </div>
           ) : (
             <button
-              onClick={handleSignAndDownload}
-              className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-xl shadow-lg shadow-blue-500/30 transition-all transform hover:-translate-y-0.5 active:translate-y-0"
+              onClick={handleSign}
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-8 rounded-xl shadow-xl shadow-blue-600/20 transition-all transform hover:-translate-y-1 active:translate-y-0 text-lg flex items-center justify-center gap-2"
             >
-              Sign & Download Certificate
+              <FileCheck size={20} />
+              Sign & Create Certificate
             </button>
           )}
 
           <button 
-            onClick={() => { setFileHash(null); setStatus(''); }}
-            className="text-gray-400 text-sm hover:text-gray-600 underline"
+            onClick={handleReset}
+            className="text-slate-400 text-sm hover:text-slate-600 transition"
           >
-            Reset
+            Cancel
           </button>
         </div>
       )}
