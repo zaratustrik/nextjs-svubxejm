@@ -22,6 +22,10 @@ const translations = {
     dragDrop: 'Перетащи файл сюда или кликни',
     navHow: 'Как это работает',
     navCheck: 'Проверить файл',
+    // --- НОВЫЕ СТРОЧКИ ---
+    donate: 'Поддержать',
+    copied: 'Адрес скопирован!',
+    // ---------------------
     caseDesignTitle: 'Для Дизайнеров',
     caseDesignDesc: 'Защитите свои работы перед публикацией в портфолио. Докажите, что вы создали логотип или иллюстрацию первыми.',
     caseLawTitle: 'Для Бизнеса',
@@ -47,6 +51,10 @@ const translations = {
     dragDrop: 'Drag & drop file here or click',
     navHow: 'How it works',
     navCheck: 'Verify file',
+    // --- NEW LINES ---
+    donate: 'Donate',
+    copied: 'Address copied!',
+    // -----------------
     caseDesignTitle: 'For Designers',
     caseDesignDesc: 'Protect your work before publishing in a portfolio. Prove you created the logo or illustration first.',
     caseLawTitle: 'For Business',

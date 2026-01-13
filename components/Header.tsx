@@ -1,56 +1,59 @@
 'use client';
 
-import React from 'react';
-import Link from 'next/link'; // <--- ВАЖНЫЙ ИМПОРТ
+import React, { useState } from 'react';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
-import { useLanguage } from '../context/LanguageContext'; 
+import { useLanguage } from '../context/LanguageContext';
 
 export const Header = () => {
-  const { lang, toggleLang, t } = useLanguage();
+  const { t, toggleLang, lang } = useLanguage();
+  const [isCopied, setIsCopied] = useState(false);
+
+  // ВСТАВЬ СЮДА СВОЙ КОШЕЛЕК! 👇
+  const DONATION_ADDRESS = '0x1e5433909b8Daa6414af528cDfac4FA162A33Aa2'; 
+
+  const handleDonate = () => {
+    navigator.clipboard.writeText(DONATION_ADDRESS);
+    setIsCopied(true);
+    setTimeout(() => setIsCopied(false), 2000); // Через 2 секунды возвращаем текст обратно
+  };
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-white/60 backdrop-blur-xl border-b border-white/20">
-      <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-        
-        {/* Логотип -> ведет на Главную */}
-        <Link href="/" className="flex items-center gap-3 select-none hover:opacity-80 transition">
-          <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-violet-600 rounded-xl flex items-center justify-center text-white font-bold shadow-lg shadow-blue-500/20 font-outfit">
-            CN
-          </div>
-          <span className="text-xl font-bold text-gray-900 tracking-tight font-outfit hidden sm:block">
-            CryptoNotary
-          </span>
-        </Link>
+    <header className="p-4 flex justify-between items-center max-w-7xl mx-auto">
+      <div className="flex items-center gap-2">
+        <div className="bg-blue-600 text-white font-bold p-2 rounded-lg">CN</div>
+        <span className="font-bold text-xl hidden sm:block">CryptoNotary</span>
+      </div>
 
-        {/* Правая часть */}
-        <div className="flex items-center gap-4 md:gap-6">
-          <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-gray-600">
-            {/* Ссылка на якорь (блок "Как это работает" на главной) */}
-            <Link href="/#features" className="hover:text-blue-600 transition-colors">
-              {t('navHow')}
-            </Link>
-            
-            {/* Ссылка на страницу Проверки */}
-            <Link href="/verify" className="hover:text-blue-600 transition-colors">
-              {t('navCheck')}
-            </Link>
-          </nav>
+      <div className="flex items-center gap-4">
+        {/* Кнопка Donate */}
+        <button
+          onClick={handleDonate}
+          className={`
+            flex items-center gap-2 px-4 py-2 rounded-xl font-medium transition-all duration-200
+            ${isCopied 
+              ? 'bg-green-100 text-green-700 border border-green-200' 
+              : 'bg-pink-50 text-pink-600 hover:bg-pink-100 border border-pink-100'}
+          `}
+        >
+          {isCopied ? (
+            <span>✅ {t('copied')}</span>
+          ) : (
+            <>
+              <span>💖 {t('donate')}</span>
+            </>
+          )}
+        </button>
 
-          <div className="h-6 w-px bg-gray-300 hidden md:block"></div>
+        {/* Переключатель языка */}
+        <button 
+          onClick={toggleLang}
+          className="w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center hover:bg-gray-50 font-bold text-sm text-gray-600 transition-colors"
+        >
+          {lang === 'ru' ? 'RU' : 'EN'}
+        </button>
 
-          <button 
-            onClick={toggleLang}
-            className="w-9 h-9 rounded-full bg-white border border-gray-200 text-xs font-bold text-gray-700 hover:border-blue-500 hover:text-blue-600 transition flex items-center justify-center shadow-sm"
-          >
-            {lang === 'ru' ? 'EN' : 'RU'}
-          </button>
-
-          <ConnectButton 
-            accountStatus="avatar" 
-            chainStatus="none" 
-            showBalance={false} 
-          />
-        </div>
+        {/* Кнопка кошелька */}
+        <ConnectButton showBalance={false} accountStatus="address" />
       </div>
     </header>
   );
