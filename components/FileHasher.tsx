@@ -16,9 +16,8 @@ export const FileHasher = () => {
   const { address } = useAccount();
   const { signMessageAsync } = useSignMessage();
 
-  // --- 1. ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ (Объявляем в начале) ---
+  // --- 1. ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ---
 
-  // Хелпер для SHA-256
   const API_SHA256_HELPER = (buffer: any) => {
     const words = [];
     const u8 = new Uint8Array(buffer);
@@ -30,7 +29,6 @@ export const FileHasher = () => {
     return { sigBytes: u8.length, words: words };
   };
 
-  // Генерация PDF
   const generatePDF = async (hash: string, sig: string, wallet: string, fName: string) => {
     const pdfDoc = await PDFDocument.create();
     const page = pdfDoc.addPage([600, 400]);
@@ -46,14 +44,15 @@ export const FileHasher = () => {
     page.drawText(`Date: ${new Date().toLocaleString()}`, { x: 50, y: 50, size: 10, font });
 
     const pdfBytes = await pdfDoc.save();
-    const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+    // ИСПРАВЛЕНИЕ 1: Добавили "as any", чтобы успокоить TypeScript
+    const blob = new Blob([pdfBytes as any], { type: 'application/pdf' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
     link.download = 'Certificate_Proof.pdf';
     link.click();
   };
 
-  // --- 2. ОСНОВНЫЕ ФУНКЦИИ (Используют вспомогательные) ---
+  // --- 2. ОСНОВНЫЕ ФУНКЦИИ ---
 
   const handleSignAndDownload = async () => {
     if (!fileHash || !address) return;
@@ -64,7 +63,6 @@ export const FileHasher = () => {
       });
 
       setStatus('Generating PDF...');
-      // Теперь generatePDF уже объявлена выше, ошибки не будет
       await generatePDF(fileHash, signature, address, fileName || 'Unknown File');
       setStatus('Done! Certificate downloaded.');
     } catch (error) {
@@ -84,10 +82,9 @@ export const FileHasher = () => {
     reader.onload = (event) => {
       const binary = event.target?.result;
       if (binary) {
-        // @ts-ignore
-        // API_SHA256_HELPER тоже объявлен выше
         const wordArray = API_SHA256_HELPER(binary);
-        const hash = SHA256(wordArray).toString();
+        // ИСПРАВЛЕНИЕ 2: Добавили "as any", чтобы TypeScript принял наш самодельный wordArray
+        const hash = SHA256(wordArray as any).toString();
         setFileHash(hash);
         setStatus('Ready to sign');
       }
@@ -97,7 +94,7 @@ export const FileHasher = () => {
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop });
 
-  // --- 3. ИНТЕРФЕЙС (HTML) ---
+  // --- 3. ИНТЕРФЕЙС ---
   return (
     <div className="w-full max-w-2xl mx-auto bg-white rounded-3xl shadow-xl p-8 border border-gray-100">
       
