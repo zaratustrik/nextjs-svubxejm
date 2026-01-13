@@ -22,18 +22,14 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={`${inter.className} min-h-screen flex flex-col bg-white text-slate-900 relative selection:bg-blue-100 selection:text-blue-900`}>
+      <body className={`${inter.className} min-h-screen flex flex-col relative text-slate-900`}>
         
-        {/* === ФОН (ГЛАВНОЕ ИЗМЕНЕНИЕ) === */}
-        {/* 1. Основной фон белый (указан в className выше: bg-white) */}
-        
-        {/* 2. Свечение сверху (Aurora Effect) как на сайте */}
-        {/* Это большой градиент, который идет от светло-голубого к белому сверху вниз */}
-        <div className="fixed top-0 inset-x-0 h-[600px] -z-10 pointer-events-none">
-          <div className="absolute inset-0 bg-gradient-to-b from-blue-50/80 via-indigo-50/30 to-white blur-3xl opacity-80" />
-          
-          {/* Дополнительное пятно по центру для глубины */}
-          <div className="absolute top-[-20%] left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-blue-100/40 rounded-[100%] blur-[80px]" />
+        {/* === ФОН (Aurora Background) === */}
+        {/* Это точная копия фона: белый с мягким голубым градиентом сверху */}
+        <div className="fixed inset-0 -z-10 h-full w-full bg-white">
+          <div className="absolute top-0 right-0 -z-10 w-[50%] h-[500px] bg-blue-100/40 blur-[100px] rounded-full mix-blend-multiply opacity-70 animate-blob"></div>
+          <div className="absolute top-0 left-0 -z-10 w-[50%] h-[500px] bg-purple-100/40 blur-[100px] rounded-full mix-blend-multiply opacity-70 animate-blob animation-delay-2000"></div>
+          <div className="absolute top-[-20%] left-[20%] -z-10 w-[60%] h-[500px] bg-indigo-50/50 blur-[100px] rounded-full mix-blend-multiply opacity-70 animate-blob animation-delay-4000"></div>
         </div>
 
         <LanguageProvider>
@@ -41,8 +37,8 @@ export default function RootLayout({
             
             <Header />
             
-            {/* main: pt-28 (отступ сверху), чтобы не перекрывалось хедером */}
-            <main className="flex-grow pt-28 px-4 w-full max-w-7xl mx-auto flex flex-col items-center relative z-0">
+            {/* Main Container: pt-24 (отступ для хедера) + центровка */}
+            <main className="flex-grow pt-24 px-4 w-full max-w-7xl mx-auto flex flex-col items-center">
               {children}
             </main>
             
