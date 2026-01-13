@@ -1,9 +1,10 @@
 'use client';
 
 import React from 'react';
-// Импортируем компонент../components/FileHasherимание на путь: теперь они все в одной папке
-import { Header } from '../components/Header';
-import { Footer } from '../components/Footer';
+// Убрали импорт Header, оставили только Footer (хотя Footer тоже лучше в layout, но пока пусть тут, если не дублируется)
+// А нет, давай уберем и Footer отсюда, если он есть в Layout!
+// Давай сделаем чисто: в page.tsx только уникальный контент.
+
 import { FileHasher } from '../components/FileHasher';
 import { useLanguage } from '../context/LanguageContext';
 
@@ -12,12 +13,12 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white text-gray-900 font-sans flex flex-col">
-      {/* 1. Шапка */}
-      <Header />
+      
+      {/* HEADER УДАЛЕН ОТСЮДА (он будет в layout) */}
 
       <main className="flex-grow flex flex-col items-center justify-center px-4 sm:px-6 lg:px-8 py-12">
         
-        {/* 2. Заголовок (Hero Section) */}
+        {/* Заголовок (Hero Section) */}
         <div className="text-center max-w-4xl mx-auto mb-16 space-y-6">
           <div className="inline-block animate-pulse bg-blue-100 text-blue-700 px-4 py-1.5 rounded-full text-sm font-semibold mb-4">
             New: Ethereum & Polygon Support
@@ -33,12 +34,12 @@ export default function Home() {
           </p>
         </div>
 
-        {/* 3. Главный компонент (Загрузка файла) */}
+        {/* Главный компонент (Загрузка файла) */}
         <div className="w-full max-w-3xl mb-24 z-10">
           <FileHasher />
         </div>
 
-        {/* 4. Блок преимуществ (Features) */}
+        {/* Блок преимуществ */}
         <div className="grid md:grid-cols-3 gap-8 w-full max-w-6xl mx-auto px-4">
           <FeatureCard 
             icon="🎨" 
@@ -57,7 +58,7 @@ export default function Home() {
           />
         </div>
         
-        {/* 5. Инструкция (Steps) */}
+        {/* Инструкция */}
         <div className="mt-24 w-full max-w-5xl">
           <h2 className="text-3xl font-bold text-center mb-12">{t('navHow')}</h2>
           <div className="grid md:grid-cols-3 gap-8 text-center">
@@ -69,13 +70,14 @@ export default function Home() {
 
       </main>
 
-      {/* 6. Подвал */}
-      <Footer />
+      {/* FOOTER тоже лучше убрать, если он дублируется. 
+          Если Footer в layout.tsx уже есть - удали строчку ниже. 
+          Если нет - оставь. Для надежности я пока оставлю тут импорт Footer в layout.tsx */}
     </div>
   );
 }
 
-// Маленькие компоненты для красоты (оставляем тут же)
+// Маленькие компоненты
 function FeatureCard({ icon, title, desc }: { icon: string; title: string; desc: string }) {
   return (
     <div className="bg-white p-8 rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 group">
