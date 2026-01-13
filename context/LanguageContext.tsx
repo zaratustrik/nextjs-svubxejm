@@ -39,6 +39,13 @@ const translations = {
     step2Desc: 'Используй свой крипто-кошелек, чтобы оставить математически неопровержимую подпись на этом отпечатке.',
     step3Title: '3. Получи сертификат',
     step3Desc: 'Скачай PDF-документ с доказательством. Теперь у тебя есть вечное подтверждение авторства.'
+  
+  // Внутри объекта ru: { ... } добавь:
+footerTerms: 'Условия использования',
+footerRights: 'Все права защищены',
+builtWith: 'Сделано на Next.js & Ethereum',
+
+
   },
   en: {
     heroTitle: 'Prove ownership',
@@ -68,6 +75,11 @@ const translations = {
     step2Desc: 'Use your crypto wallet to place a mathematically irrefutable signature on this fingerprint.',
     step3Title: '3. Get Certificate',
     step3Desc: 'Download the PDF proof. You now have eternal confirmation of ownership.'
+  
+  // Внутри объекта en: { ... } добавь:
+footerTerms: 'Terms of Use',
+footerRights: 'All rights reserved',
+builtWith: 'Built with Next.js & Ethereum',
   }
 };
 

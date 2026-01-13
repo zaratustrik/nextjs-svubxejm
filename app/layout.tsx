@@ -3,6 +3,7 @@ import { Providers } from './providers';
 import { Header } from '../components/Header'; 
 import { LanguageProvider } from '../context/LanguageContext';
 import { Inter, Outfit } from 'next/font/google';
+import { Footer } from '../components/Footer';
 // 1. ДОБАВЛЕН ИМПОРТ LINK
 import Link from 'next/link'; 
 
@@ -37,17 +38,7 @@ export default function RootLayout({
             {/* Основной контент */}
             {children}
 
-            {/* 2. ДОБАВЛЕН ФУТЕР */}
-            <footer className="py-8 text-center text-gray-400 text-sm relative z-10">
-              <div className="flex flex-col md:flex-row items-center justify-center gap-4 md:gap-8 mb-4">
-                <p>© {new Date().getFullYear()} CryptoNotary</p>
-                
-                <Link href="/terms" className="hover:text-blue-600 transition underline underline-offset-4">
-                  Условия использования
-                </Link>
-              </div>
-              <p className="opacity-50 text-xs">Built with Next.js & Ethereum</p>
-            </footer>
+            
 
           </LanguageProvider>
         </Providers>
