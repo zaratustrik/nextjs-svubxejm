@@ -8,13 +8,13 @@ export const Header = () => {
   const { t, toggleLang, lang } = useLanguage();
   const [isCopied, setIsCopied] = useState(false);
 
-  // ВСТАВЬ СЮДА СВОЙ КОШЕЛЕК! 👇
-  const DONATION_ADDRESS = '0x1e5433909b8Daa6414af528cDfac4FA162A33Aa2'; 
+  // 👇 ВСТАВЬ СЮДА СВОЙ КОШЕЛЕК
+  const DONATION_ADDRESS = '0x0000000000000000000000000000000000000000'; 
 
   const handleDonate = () => {
     navigator.clipboard.writeText(DONATION_ADDRESS);
     setIsCopied(true);
-    setTimeout(() => setIsCopied(false), 2000); // Через 2 секунды возвращаем текст обратно
+    setTimeout(() => setIsCopied(false), 2000);
   };
 
   return (
@@ -44,7 +44,7 @@ export const Header = () => {
           )}
         </button>
 
-        {/* Переключатель языка */}
+        {/* Язык */}
         <button 
           onClick={toggleLang}
           className="w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center hover:bg-gray-50 font-bold text-sm text-gray-600 transition-colors"
@@ -52,7 +52,6 @@ export const Header = () => {
           {lang === 'ru' ? 'RU' : 'EN'}
         </button>
 
-        {/* Кнопка кошелька */}
         <ConnectButton showBalance={false} accountStatus="address" />
       </div>
     </header>

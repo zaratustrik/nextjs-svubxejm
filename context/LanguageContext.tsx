@@ -19,13 +19,17 @@ const translations = {
     security: 'Безопасно',
     speed: 'Быстро',
     public: 'Публично',
+    
+    // --- ЗАГРУЗКА ФАЙЛА ---
     dragDrop: 'Перетащи файл сюда или кликни',
+    
+    // --- МЕНЮ ---
     navHow: 'Как это работает',
     navCheck: 'Проверить файл',
-    // --- НОВЫЕ СТРОЧКИ ---
     donate: 'Поддержать',
     copied: 'Адрес скопирован!',
-    // ---------------------
+
+    // --- КАРТОЧКИ ---
     caseDesignTitle: 'Для Дизайнеров',
     caseDesignDesc: 'Защитите свои работы перед публикацией в портфолио. Докажите, что вы создали логотип или иллюстрацию первыми.',
     caseLawTitle: 'Для Бизнеса',
@@ -33,19 +37,19 @@ const translations = {
     caseMusicTitle: 'Для Авторов',
     caseMusicDesc: 'Битмейкеры, писатели и исследователи могут закрепить за собой первенство идеи до официального релиза.',
     poweredBy: 'Работает на базе',
+
+    // --- ШАГИ ---
     step1Title: '1. Выбери файл',
     step1Desc: 'Алгоритм SHA-256 создаст уникальный цифровой отпечаток. Файл не загружается на сервер и остается у тебя.',
     step2Title: '2. Подпиши',
     step2Desc: 'Используй свой крипто-кошелек, чтобы оставить математически неопровержимую подпись на этом отпечатке.',
     step3Title: '3. Получи сертификат',
-    step3Desc: 'Скачай PDF-документ с доказательством. Теперь у тебя есть вечное подтверждение авторства.'
-  
-  // Внутри объекта ru: { ... } добавь:
-footerTerms: 'Условия использования',
-footerRights: 'Все права защищены',
-builtWith: 'Сделано на Next.js & Ethereum',
+    step3Desc: 'Скачай PDF-документ с доказательством. Теперь у тебя есть вечное подтверждение авторства.',
 
-
+    // --- ПОДВАЛ (FOOTER) ---
+    footerTerms: 'Условия использования',
+    footerRights: 'Все права защищены',
+    builtWith: 'Сделано на Next.js & Ethereum'
   },
   en: {
     heroTitle: 'Prove ownership',
@@ -55,13 +59,17 @@ builtWith: 'Сделано на Next.js & Ethereum',
     security: 'Secure',
     speed: 'Fast',
     public: 'Public',
+
+    // --- FILE UPLOAD ---
     dragDrop: 'Drag & drop file here or click',
+
+    // --- NAV ---
     navHow: 'How it works',
     navCheck: 'Verify file',
-    // --- NEW LINES ---
     donate: 'Donate',
     copied: 'Address copied!',
-    // -----------------
+
+    // --- CARDS ---
     caseDesignTitle: 'For Designers',
     caseDesignDesc: 'Protect your work before publishing in a portfolio. Prove you created the logo or illustration first.',
     caseLawTitle: 'For Business',
@@ -69,39 +77,35 @@ builtWith: 'Сделано на Next.js & Ethereum',
     caseMusicTitle: 'For Creators',
     caseMusicDesc: 'Beatmakers, writers, and researchers can secure the priority of an idea before the official release.',
     poweredBy: 'Powered by',
+
+    // --- STEPS ---
     step1Title: '1. Select File',
     step1Desc: 'SHA-256 algorithm creates a unique fingerprint. The file is never uploaded and stays on your device.',
     step2Title: '2. Sign It',
     step2Desc: 'Use your crypto wallet to place a mathematically irrefutable signature on this fingerprint.',
     step3Title: '3. Get Certificate',
-    step3Desc: 'Download the PDF proof. You now have eternal confirmation of ownership.'
-  
-  // Внутри объекта en: { ... } добавь:
-footerTerms: 'Terms of Use',
-footerRights: 'All rights reserved',
-builtWith: 'Built with Next.js & Ethereum',
+    step3Desc: 'Download the PDF proof. You now have eternal confirmation of ownership.',
+
+    // --- FOOTER ---
+    footerTerms: 'Terms of Use',
+    footerRights: 'All rights reserved',
+    builtWith: 'Built with Next.js & Ethereum'
   }
 };
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
 export const LanguageProvider = ({ children }: { children: ReactNode }) => {
-  // По умолчанию начинаем с английского (стандарт), но useEffect сразу это исправит
   const [lang, setLang] = useState<Lang>('en'); 
 
-  // --- МАГИЯ АВТО-ОПРЕДЕЛЕНИЯ ---
   useEffect(() => {
-    // Проверяем язык браузера пользователя
     const userLang = navigator.language || navigator.languages[0];
-    
-    // Если язык начинается с 'ru' (например ru-RU, ru-BY), включаем русский
     if (userLang.toLowerCase().startsWith('ru')) {
       setLang('ru');
     } else {
       setLang('en');
     }
   }, []);
-  // -----------------------------
 
   const toggleLang = () => setLang((prev) => (prev === 'ru' ? 'en' : 'ru'));
 
