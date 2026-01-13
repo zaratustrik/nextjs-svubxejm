@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
 type Lang = 'ru' | 'en';
 
@@ -22,7 +22,6 @@ const translations = {
     dragDrop: 'Перетащи файл сюда или кликни',
     navHow: 'Как это работает',
     navCheck: 'Проверить файл',
-    // Новые переводы (Use Cases)
     caseDesignTitle: 'Для Дизайнеров',
     caseDesignDesc: 'Защитите свои работы перед публикацией в портфолио. Докажите, что вы создали логотип или иллюстрацию первыми.',
     caseLawTitle: 'Для Бизнеса',
@@ -30,7 +29,6 @@ const translations = {
     caseMusicTitle: 'Для Авторов',
     caseMusicDesc: 'Битмейкеры, писатели и исследователи могут закрепить за собой первенство идеи до официального релиза.',
     poweredBy: 'Работает на базе',
-    // --- НОВЫЕ ПЕРЕВОДЫ (ШАГИ) ---
     step1Title: '1. Выбери файл',
     step1Desc: 'Алгоритм SHA-256 создаст уникальный цифровой отпечаток. Файл не загружается на сервер и остается у тебя.',
     step2Title: '2. Подпиши',
@@ -49,7 +47,6 @@ const translations = {
     dragDrop: 'Drag & drop file here or click',
     navHow: 'How it works',
     navCheck: 'Verify file',
-    // New translations (Use Cases)
     caseDesignTitle: 'For Designers',
     caseDesignDesc: 'Protect your work before publishing in a portfolio. Prove you created the logo or illustration first.',
     caseLawTitle: 'For Business',
@@ -57,7 +54,6 @@ const translations = {
     caseMusicTitle: 'For Creators',
     caseMusicDesc: 'Beatmakers, writers, and researchers can secure the priority of an idea before the official release.',
     poweredBy: 'Powered by',
-    // --- NEW TRANSLATIONS (STEPS) ---
     step1Title: '1. Select File',
     step1Desc: 'SHA-256 algorithm creates a unique fingerprint. The file is never uploaded and stays on your device.',
     step2Title: '2. Sign It',
@@ -70,7 +66,22 @@ const translations = {
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
 export const LanguageProvider = ({ children }: { children: ReactNode }) => {
-  const [lang, setLang] = useState<Lang>('ru');
+  // По умолчанию начинаем с английского (стандарт), но useEffect сразу это исправит
+  const [lang, setLang] = useState<Lang>('en'); 
+
+  // --- МАГИЯ АВТО-ОПРЕДЕЛЕНИЯ ---
+  useEffect(() => {
+    // Проверяем язык браузера пользователя
+    const userLang = navigator.language || navigator.languages[0];
+    
+    // Если язык начинается с 'ru' (например ru-RU, ru-BY), включаем русский
+    if (userLang.toLowerCase().startsWith('ru')) {
+      setLang('ru');
+    } else {
+      setLang('en');
+    }
+  }, []);
+  // -----------------------------
 
   const toggleLang = () => setLang((prev) => (prev === 'ru' ? 'en' : 'ru'));
 
