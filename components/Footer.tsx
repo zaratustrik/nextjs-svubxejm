@@ -8,7 +8,7 @@ export const Footer = () => {
   const { t } = useLanguage();
 
   return (
-    <footer className="w-full py-8 text-center bg-white border-t border-slate-100 mt-auto relative z-10">
+    <footer className="w-full py-8 text-center mt-auto">
       <div className="flex flex-col gap-3 text-slate-400 text-sm">
         <p>
           © {new Date().getFullYear()} CryptoNotary. {t('footerRights')}
