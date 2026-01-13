@@ -25,20 +25,24 @@ export const Certificate: React.FC<CertificateProps> = ({
 
     try {
       const canvas = await html2canvas(certificateRef.current, {
-        scale: 2,
+        scale: 2, // Высокое качество
         backgroundColor: '#FFFCF5',
         logging: false,
       });
 
       const imgData = canvas.toDataURL('image/png');
+      
+      // ИЗМЕНЕНИЕ: Portrait (Вертикальная ориентация)
       const pdf = new jsPDF({
-        orientation: 'landscape',
+        orientation: 'portrait', 
         unit: 'mm',
         format: 'a4',
       });
 
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = pdf.internal.pageSize.getHeight();
+      
+      // Растягиваем на весь лист
       pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
 
       pdf.save(`Certificate_${fileName}.pdf`);
@@ -48,131 +52,144 @@ export const Certificate: React.FC<CertificateProps> = ({
   };
 
   return (
-    <div className="flex flex-col items-center gap-6 mt-8">
+    <div className="flex flex-col items-center gap-8 mt-8 pb-12">
       
-      {/* === ВИЗУАЛЬНАЯ ЧАСТЬ СЕРТИФИКАТА === */}
+      {/* === БУМАГА СЕРТИФИКАТА (Формат А4) === */}
+      {/* w-[794px] h-[1123px] — это точные пиксельные размеры А4 при 96 DPI */}
       <div 
         ref={certificateRef}
-        className="w-[800px] h-[600px] bg-[#FFFCF5] text-slate-900 relative p-12 shadow-2xl overflow-hidden border border-slate-300"
+        className="w-[794px] h-[1123px] bg-[#FFFCF5] text-slate-900 relative p-16 shadow-2xl overflow-hidden border border-slate-300 flex flex-col justify-between"
         style={{ fontFamily: 'Times New Roman, serif' }}
       >
         
-        {/* Декоративные рамки и фон */}
-        <div className="absolute inset-4 border-[3px] border-slate-800 pointer-events-none z-10"></div>
-        <div className="absolute inset-6 border border-slate-600 pointer-events-none z-10"></div>
-        <div className="absolute inset-0 flex items-center justify-center opacity-[0.03] pointer-events-none">
-          <ShieldCheck size={400} />
-        </div>
-        <div className="absolute top-4 left-4 w-16 h-16 border-t-[3px] border-l-[3px] border-slate-800"></div>
-        <div className="absolute top-4 right-4 w-16 h-16 border-t-[3px] border-r-[3px] border-slate-800"></div>
-        <div className="absolute bottom-4 left-4 w-16 h-16 border-b-[3px] border-l-[3px] border-slate-800"></div>
-        <div className="absolute bottom-4 right-4 w-16 h-16 border-b-[3px] border-r-[3px] border-slate-800"></div>
+        {/* --- ДЕКОРАЦИИ (Рамки и Фон) --- */}
+        {/* Внешняя тонкая рамка */}
+        <div className="absolute inset-4 border border-slate-400 pointer-events-none z-10"></div>
+        {/* Внутренняя толстая рамка */}
+        <div className="absolute inset-6 border-[4px] border-double border-slate-900 pointer-events-none z-10"></div>
+        
+        {/* Угловые узоры */}
+        <div className="absolute top-6 left-6 w-24 h-24 border-t-[6px] border-l-[6px] border-slate-900 z-20"></div>
+        <div className="absolute top-6 right-6 w-24 h-24 border-t-[6px] border-r-[6px] border-slate-900 z-20"></div>
+        <div className="absolute bottom-6 left-6 w-24 h-24 border-b-[6px] border-l-[6px] border-slate-900 z-20"></div>
+        <div className="absolute bottom-6 right-6 w-24 h-24 border-b-[6px] border-r-[6px] border-slate-900 z-20"></div>
 
-        {/* Контент */}
-        <div className="relative z-20 flex flex-col items-center text-center h-full justify-between py-4">
+        {/* Водяной знак */}
+        <div className="absolute inset-0 flex items-center justify-center opacity-[0.04] pointer-events-none">
+          <ShieldCheck size={600} />
+        </div>
+
+        {/* --- КОНТЕНТ (Верхняя часть) --- */}
+        <div className="relative z-20 flex flex-col items-center text-center mt-8">
           
-          {/* Шапка */}
-          <div>
-            <div className="flex justify-center mb-4 text-slate-800">
-               <Award size={48} />
-            </div>
-            <h1 className="text-5xl font-bold uppercase tracking-widest mb-2 text-slate-900">
-              Certificate
-            </h1>
-            <p className="text-xl italic text-slate-600">
-              of Blockchain Timestamp & Ownership
-            </p>
+          {/* Иконка */}
+          <div className="mb-6 text-slate-800">
+             <Award size={64} strokeWidth={1} />
           </div>
 
-          <div className="w-2/3 h-px bg-slate-300 my-2"></div>
+          {/* Заголовок */}
+          <h1 className="text-6xl font-bold uppercase tracking-widest mb-4 text-slate-900">
+            Certificate
+          </h1>
+          <p className="text-2xl italic text-slate-600 font-serif">
+            of Blockchain Ownership & Timestamp
+          </p>
+          
+          <div className="w-1/2 h-0.5 bg-slate-800 mt-8 mb-2"></div>
+          <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Official Document</p>
+        </div>
 
-          {/* Основные данные */}
-          <div className="w-full space-y-6 px-8">
+        {/* --- КОНТЕНТ (Центральная часть - Данные) --- */}
+        <div className="relative z-20 flex flex-col items-center w-full px-12 space-y-10 flex-grow justify-center">
             
             {/* Файл */}
-            <div>
-              <p className="text-xs uppercase tracking-widest text-slate-500 mb-1">Authenticated File Asset</p>
-              <div className="text-2xl font-bold text-blue-900 break-all leading-tight flex items-center justify-center gap-2">
-                 <FileText size={20} className="text-blue-600" />
-                 {fileName}
+            <div className="w-full text-center">
+              <p className="text-sm uppercase tracking-widest text-slate-500 mb-3 font-semibold">Authenticated File Asset</p>
+              <div className="flex flex-col items-center justify-center p-4 bg-white/60 border border-slate-200 rounded-lg">
+                 <FileText size={32} className="text-blue-800 mb-2" />
+                 <span className="text-3xl font-bold text-slate-900 break-all leading-tight">
+                   {fileName}
+                 </span>
               </div>
             </div>
 
             {/* Владелец */}
-            <div>
-              <p className="text-xs uppercase tracking-widest text-slate-500 mb-1">Digital Owner (Wallet)</p>
-              <p className="font-mono text-base bg-slate-100/50 py-1 px-4 rounded border border-slate-200 inline-block text-slate-700">
+            <div className="w-full text-center">
+              <p className="text-sm uppercase tracking-widest text-slate-500 mb-3 font-semibold">Registered Owner (Wallet)</p>
+              <p className="font-mono text-lg bg-slate-100 py-2 px-6 rounded border border-slate-300 inline-block text-slate-800 shadow-sm">
                 {walletAddress}
               </p>
             </div>
 
-            {/* Хеш и подпись */}
-            <div className="grid grid-cols-2 gap-4 text-left bg-white/50 border border-slate-200 p-4 rounded-lg">
+            {/* Технические данные (Сетка) */}
+            <div className="w-full grid grid-cols-1 gap-6 text-left bg-white/40 border-2 border-slate-100 p-6 rounded-xl">
+               {/* Hash */}
                <div>
-                  <div className="flex items-center gap-1 text-[10px] uppercase font-bold text-slate-500 mb-1">
-                    <Fingerprint size={12} /> SHA-256 Fingerprint
+                  <div className="flex items-center gap-2 text-xs uppercase font-bold text-slate-500 mb-2">
+                    <Fingerprint size={16} /> SHA-256 Digital Fingerprint
                   </div>
-                  <p className="font-mono text-[10px] text-slate-600 break-all leading-relaxed">
+                  <p className="font-mono text-xs text-slate-600 break-all bg-white p-3 border border-slate-200 rounded">
                     {fileHash}
                   </p>
                </div>
+               
+               {/* Signature */}
                <div>
-                  <div className="flex items-center gap-1 text-[10px] uppercase font-bold text-slate-500 mb-1">
-                    <Award size={12} /> Digital Signature
+                  <div className="flex items-center gap-2 text-xs uppercase font-bold text-slate-500 mb-2">
+                    <Award size={16} /> Cryptographic Signature
                   </div>
-                  <p className="font-mono text-[10px] text-slate-400 break-all leading-relaxed line-clamp-3">
+                  <p className="font-mono text-xs text-slate-500 break-all bg-white p-3 border border-slate-200 rounded leading-relaxed">
                     {signature}
                   </p>
                </div>
             </div>
-
-          </div>
-
-          {/* === ИСПРАВЛЕННЫЙ ПОДВАЛ === */}
-          {/* Используем Grid для четкого разделения на 3 колонки */}
-          <div className="w-full grid grid-cols-3 items-end px-8 mt-4">
-            
-            {/* Левая колонка: Дата */}
-            <div className="text-left">
-              <div className="flex items-center gap-2 text-slate-600 mb-1">
-                <Calendar size={16} />
-                <span className="font-bold text-sm">Date Issued:</span>
-              </div>
-              {/* Убрал pr-8, чтобы линия была ровно под текстом */}
-              <p className="text-lg border-b border-slate-400 pb-1 inline-block font-mono">
-                {timestamp}
-              </p>
-            </div>
-
-            {/* Центральная колонка: Золотая Печать */}
-            {/* Убрал absolute, теперь она просто в центре своей колонки */}
-            <div className="flex flex-col items-center pb-2">
-              <div className="w-24 h-24 rounded-full bg-gradient-to-br from-yellow-200 via-yellow-400 to-yellow-600 shadow-xl border-4 border-yellow-100 flex items-center justify-center">
-                <ShieldCheck className="text-yellow-900 opacity-70" size={40} />
-              </div>
-              <div className="mt-2 text-center">
-                 <p className="text-[10px] uppercase tracking-widest font-bold text-slate-400">Verified</p>
-              </div>
-            </div>
-
-            {/* Правая колонка: Service Provider */}
-            <div className="text-right pb-2">
-               <p className="text-[10px] uppercase tracking-widest text-slate-400 mb-2">Service Provider</p>
-               <div className="flex items-center gap-2 justify-end">
-                 <div className="bg-blue-600 text-white text-xs font-bold p-1 rounded">CN</div>
-                 <span className="font-bold text-slate-800">CryptoNotary</span>
-               </div>
-               <p className="text-[10px] text-slate-400 mt-1">Immutable Proof</p>
-            </div>
-
-          </div>
         </div>
+
+        {/* --- ПОДВАЛ (Нижняя часть) --- */}
+        <div className="relative z-20 w-full grid grid-cols-3 items-end px-4 mb-8">
+            
+            {/* Слева: Дата */}
+            <div className="text-left">
+              <p className="text-xs uppercase tracking-widest text-slate-400 mb-2 font-bold">Date Issued</p>
+              <div className="flex items-center gap-2 text-slate-800 border-t border-slate-400 pt-2 pr-8">
+                <Calendar size={18} />
+                <span className="font-mono text-lg font-bold">{timestamp}</span>
+              </div>
+            </div>
+
+            {/* Центр: Печать */}
+            <div className="flex flex-col items-center">
+              <div className="w-32 h-32 rounded-full bg-gradient-to-br from-[#FCD34D] via-[#F59E0B] to-[#B45309] shadow-2xl border-[6px] border-[#FEF3C7] flex items-center justify-center relative">
+                <div className="absolute inset-2 border border-yellow-700/30 rounded-full"></div>
+                <ShieldCheck className="text-yellow-900 opacity-80 drop-shadow-sm" size={60} />
+              </div>
+              <div className="mt-4 text-center">
+                 <p className="text-xs uppercase tracking-[0.2em] font-bold text-yellow-700">Verified</p>
+                 <p className="text-[10px] uppercase text-slate-400">Immutable Proof</p>
+              </div>
+            </div>
+
+            {/* Справа: Провайдер */}
+            <div className="text-right">
+               <p className="text-xs uppercase tracking-widest text-slate-400 mb-2 font-bold">Service Provider</p>
+               <div className="flex flex-col items-end border-t border-slate-400 pt-2 pl-8">
+                 <div className="flex items-center gap-2 mb-1">
+                    <div className="bg-slate-900 text-white text-xs font-bold px-2 py-0.5 rounded">CN</div>
+                    <span className="font-bold text-xl text-slate-900">CryptoNotary</span>
+                 </div>
+                 <p className="text-[10px] text-slate-400">Blockchain Verification Protocol</p>
+               </div>
+            </div>
+
+        </div>
+
       </div>
 
       <button 
         onClick={downloadPdf}
-        className="bg-slate-900 hover:bg-slate-800 text-white px-8 py-3 rounded-xl font-bold transition shadow-lg shadow-slate-900/20 flex items-center gap-2 animate-bounce"
+        className="bg-blue-600 hover:bg-blue-700 text-white px-10 py-4 rounded-xl font-bold text-lg transition shadow-xl shadow-blue-600/20 flex items-center gap-3 transform hover:-translate-y-1 active:translate-y-0"
       >
+        <Award size={24} />
         Скачать PDF Сертификат
       </button>
 
